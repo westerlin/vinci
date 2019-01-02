@@ -132,11 +132,15 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
     {
         bool escaped = false;
         char ch;
-        /*
+        /*  Removed remark for the next paragrah
+            because if we do not read past the initiating
+            character it will excape read if same begin
+            as ending sign - example ""
+        */
         ch= lcastream.next();
         if (adding)
             token->push_back(ch);
-    */
+    
         while (!lcastream.eof()){
             ch = lcastream.next();
             //Log(str->c_str());
@@ -148,8 +152,10 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
             } else if (end.find(ch) != std::string::npos) {
                 if (adding){
                     token->push_back(ch);
+                    //if (loading_state == LCA_TEXT) Log(("Text to White:" + *token).c_str());
                     loading_state = LCA_WHITE_SPACE;
-                    return token;}
+                    return token;
+                    }
                 return NULL;
             } else {
                 if (adding) token->push_back(ch);

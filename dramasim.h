@@ -22,9 +22,8 @@ public:
   void addprecondition(std::string precondition);
   bool evaluate(Logica* worldstate);
   bool evaluate(Logica *worldstate, scenario scene);
-  bool implement(Logica* worldstate, scenario scene);
   void cleanup();
-  bool combinations(Logica *worldstate);
+  bool combinations(Logica *worldstate, bool newScenarioList);
   void addpreconditions(std::string precond_text);
   void addimplications(std::string impl_text);
   
@@ -86,12 +85,12 @@ public:
   bool readContext(std::string token);
   bool readRules(std::string token);
   void setflow();
+  bool implement(Affordance affordance);
+  LogicRule* getRuleDomain(std::string ruledomainname);
 
   DramaSimulator()
   {
 
-      LogicRuleSet *base = new LogicRuleSet();
-      rules["base"] = base;
       /*
     Log("ruleset created!");
     for (auto element : rules){

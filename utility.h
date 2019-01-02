@@ -36,10 +36,11 @@ const char *const rulePattern = "^(\\w+ \"?[^\"]*\"?)[ ]?:[ \\n\\t]*([^->]+)[ \\
 const char *const equalityPattern = "(\\w+)([!=|==|>>|<<|=>|<=]{2})(\\w+)";
 const char *const calcPattern = "([a-zA-Z_0-9\\!\\.]+)\\!i([0-9]+)[ ]?([/|\\*|\\+|\\-|%]{1})[ ]?i([0-9]+)";
 const char *const calcPatternOpen = "([a-zA-Z_0-9\\!\\.]+\\!\\[[a-zA-Z_0-9]+\\])[ ]?([/|\\*|\\+|\\-|%]{1})[ ]?i([0-9]+)";
-
+const char *const ruleDomainNamePattern = "(\\w+)\\:\\:(\\w+)";
 //std::string logicaPattern = "([\\.|\\!]{1,1})[\\[]?([A-Za-z_]+)[\\]]?";
 
-std::vector<std::string>Split(const std::string &str, const std::string &regex);
+std::vector<std::string>
+Split(const std::string &str, const std::string &regex);
 
 std::string trim(std::string text);
 void Log(const char *message);

@@ -116,10 +116,10 @@ void LogicRule::addprecondition(std::string precondition){
     }
 };
 
-bool LogicRule::combinations(Logica* worldstate){
+bool LogicRule::combinations(Logica* worldstate, bool newScenarioList){
     scenarioList tmp;
-    scenarioList output;
-    clearscenarioList(parms);
+    //scenarioList output;
+    if (newScenarioList) clearscenarioList(parms); 
     //Log(("Evaluating combinations for "+rulename).c_str());
     for (auto precondition : preconditions)
     {
@@ -142,7 +142,8 @@ bool LogicRule::combinations(Logica* worldstate){
         */
         //pscenarioList(output);
         clearscenarioList(tmp);
-        clearscenarioList(output);}
+        //clearscenarioList(output);
+        }
     }
     //Log(("\t RULING "+rulename).c_str());
     //pscenarioList(parms);
@@ -223,11 +224,36 @@ bool LogicRule::evaluate(Logica* worldstate){
     return evaluate(worldstate,scene);
 };
 
- 
-bool LogicRule::implement(Logica* worldstate, scenario scene){
-    const char *pattern = "([\\w]+)[ ]+(.+)";
-    Log(("\033[0;36m (GAME - " + rulename + ") " + *fillInParmsEXT(ruledescription, scene) + "\033[0m\n").c_str());
-    for (auto cmd : implications)
+LogicRule* DramaSimulator::getRuleDomain(std::string ruledomainname){
+    std::smatch domainname = smatch();
+    std::regex reg(ruleDomainNamePattern);
+    
+    if (std::regex_search(ruledomainname, domainname, reg)) {
+        LogicRuleSet* ruleset = getruleset(domainname.str(1));
+        if (ruleset != NULL)
+            if (ruleset->find(domainname.str(2)) != ruleset->end()) {
+                LogicRule *rule = &(*ruleset)[domainname.str(2)];
+                return rule;
+            }
+    }
+    return NULL;
+}
+
+bool DramaSimulator::implement(Affordance affordance){
+    const char *pattern = "([\\w]+)[ ]+(.+)"; 
+    LogicRule rule = affordance.rule;
+    scenario scene;
+    if (affordance.scene != NULL)
+        scene = *affordance.scene;
+    else
+        scene = scenario();
+
+    //Log(("\033[0;36m (GAME - " + rule.rulename + ") " + *fillInParmsEXT(rule.ruledescription, scene) + "\033[0m").c_str());
+    std::cout << "\033[1;36m  " << rule.rulename.c_str() << "\033[0;36m ";
+    if (affordance.scene != NULL) pscene(*affordance.scene);
+    std::cout << "\033[0m" << std::endl << std::endl;
+    Log(("  "+ *fillInParmsEXT(rule.ruledescription, scene)+"\n").c_str());
+    for (auto cmd : rule.implications)
     {
         //Log(cmd->c_str());
         //std::smatch* args = findPattern(*cmd,pattern);
@@ -235,7 +261,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
         std::regex reg(pattern);
         if (std::regex_search(*cmd, args, reg))
         {
-            //if (args) {
+            //if (args) { 
             if (args.str(1) == "add")
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
@@ -244,7 +270,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
                 std::vector<std::string> branches = Split(bodytext, "[ ]");
                 if (branches.size() == 2)
                 {
-                    worldstate->add(branches[0])->populate(worldstate->add(branches[1]));
+                    worldstate.add(branches[0])->populate(worldstate.add(branches[1]));
                     /*
                     Logica* source = worldstate->add(branches[1]);
                     Logica* destination = worldstate->add(branches[0]); //->populate(*worldstate->add(branches[1]));
@@ -263,18 +289,43 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
             else if (args.str(1) == "call")
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
-                bodytext = trim(bodytext);
-                worldstate->add(bodytext);
+                bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
+                LogicRule *newrule = getRuleDomain(bodytext);
+                if (newrule != NULL){
+                    /* Her foretages en helt ny evaluering
+                        Det er ikke smart - for der etableres de instances
+                        Som der tidligere er valgt fra 
+                   // newrule->parms = rule.parms;*/
+                   clearscenarioList(newrule->parms);
+                   newrule->parms.insert(newrule->parms.end(), scene);
+                   newrule->combinations(&worldstate, false);
+                   //pscenarioList(newrule->parms);
+
+                    for(auto specscene : newrule->parms){
+                        if (newrule->evaluate(&worldstate,specscene)){
+                            Affordance newaffordance;
+                            newaffordance.scene = &specscene;
+                            newaffordance.rule = *newrule;
+                            Log("");
+                            implement(newaffordance);
+                        }
+                    }
+                    
+                } else {
+                    Log("   (ERROR) Could not find called domain rule:");
+                    Log((" \t\t DomainRuleName=[" + bodytext + "]").c_str());
+                    throw new std::exception();
+                }
             }  else if (args.str(1) == "set")
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
                 bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
-                worldstate->add(bodytext);
+                worldstate.add(bodytext);
             } else if (args.str(1) == "pop")
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
                 bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
-                worldstate->pop(bodytext);
+                worldstate.pop(bodytext);
                 /*
                     if (worldstate->pop(args->str(2)))
                     Log((" (**) Deleted branch:" + args->str(2)).c_str());
@@ -287,15 +338,15 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
                 bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
                 if (bodytext == "switch"){
-                    if (worldstate->has(".flow!interact")){
-                        worldstate->add(".flow!random");
+                    if (worldstate.has(".flow!interact")){
+                        worldstate.add(".flow!random");
                     }else{
-                        worldstate->add(".flow!interact");}}
+                        worldstate.add(".flow!interact");}}
                 else if (bodytext == "interact"){
-                    worldstate->add(".flow!interact");
+                    worldstate.add(".flow!interact");
                 }
                 else if (bodytext == "random"){
-                    worldstate->add(".flow!random");
+                    worldstate.add(".flow!random");
                 } else {
                     Log("   (ERROR) Wrong switch flow expression:");
                     Log((" \t\t expression=[" + bodytext + "]").c_str());
@@ -312,7 +363,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
                 //bodytext.erase(std::remove(std::begin(bodytext), std::end(bodytext), ')'), std::end(bodytext));
                 //bodytext.erase(std::remove(std::begin(bodytext), std::end(bodytext), '\"'), std::end(bodytext));
                 //Log(("\n\t\t \033[1;33m" + bodytext + "\033[0m \n ").c_str());
-                Log(("\t\t \033[1;37m" + bodytext + "\033[0m").c_str());
+                Log(("\t \033[1;37m" + bodytext + "\033[0m").c_str());
             } else if (args.str(1) == "calc")
                 {
                     std::string bodytext = *fillInParmsEXT(args.str(2), scene);
@@ -323,7 +374,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
                         scenarioList valueVar;
                         //Log(calcs.str(1).c_str());
                         
-                        worldstate->parameters(calcs.str(1),valueVar);
+                        worldstate.parameters(calcs.str(1),valueVar);
                         //pscenarioList(valueVar);
                         std::string tmp = *fillInParmsEXT(bodytext, valueVar.front());
                         bodytext = tmp;
@@ -346,7 +397,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
                         if (calcs.str(3) == "/") num1 /= num2;
                         if (num1 < 0) num1 = 0;
                         std::string newPath = (calcs.str(1) + "!i" + std::to_string(num1));
-                        worldstate->add(newPath);
+                        worldstate.add(newPath);
                         //Log(newPath.c_str());
                     }
                     else
@@ -368,7 +419,7 @@ bool LogicRule::implement(Logica* worldstate, scenario scene){
         }
         else
         {
-            Log((" (ERROR) Unknown command (in rule" + rulename + "):" + *cmd).c_str());
+            Log((" (ERROR) Unknown command (in rule" + rule.rulename + "):" + *cmd).c_str());
             Log( ("\t\t ["+ *cmd +"]").c_str());
             throw new std::exception();
         }
@@ -408,10 +459,14 @@ void DramaSimulator::execute(int steps){
                 preconditions += rule.preconditions.size();
                 // Log(("   (-) Base rule included in affordances counting " + std::to_string(affordances.size()) + " affordances.").c_str());
             } else {
-                if (rule.combinations(&worldstate))
-                {   
-                    for(auto specscene : rule.parms){
+                if (rule.combinations(&worldstate,true))
+                {
+                    auto it = rule.parms.begin();
+
+                    while (it != rule.parms.end()){
+                    //for(auto specscene : rule.parms){
                         //Log(scene["ACTORS"].c_str());
+                        scenario specscene = *it;
                         scenariocount++;
                         preconditions += rule.preconditions.size();
                         if (rule.evaluate(&worldstate, specscene))
@@ -421,6 +476,9 @@ void DramaSimulator::execute(int steps){
                             newaffordance.scene = new scenario(specscene);
                             //pscenario(*newaffordance.scene);
                             affordances.insert(affordances.end(), newaffordance);
+                            it++;
+                        } else {
+                            it = rule.parms.erase(it);
                         }
                         actualPrecs += rule.counter;
                     }
@@ -429,13 +487,13 @@ void DramaSimulator::execute(int steps){
             }
 
         }
+
         if (affordances.size()>0){
             Log((header + "\033[0;32m  Produced " + std::to_string(affordances.size()) +
                           " affordances from "+std::to_string(rulecount) + 
                           " rules, "+std::to_string(scenariocount)+" scenarios and evaluated "+
                           std::to_string(actualPrecs) + " of " +
                           std::to_string(preconditions)+ " possible preconditions. \033[0m").c_str());
-            Log("");
             int iSecret = 9999;
             setflow();
             switch (flowController) {
@@ -444,7 +502,7 @@ void DramaSimulator::execute(int steps){
                 break;
                 default:
                     int optionCode = 1;
-                    Log("Choose from:");
+                    Log("\033[0;36m  Choose from: \033[0m");
                     for (auto affordance : affordances)
                     {
                         if (affordance.scene != NULL){
@@ -456,7 +514,7 @@ void DramaSimulator::execute(int steps){
                         optionCode++;                            
                     }
                     while (iSecret > affordances.size()){
-                        std::cout << "  > ";
+                        std::cout << "\033[0;36m  >\033[0m ";
                         std::cin >> iSecret;}
                     iSecret--;
                     break;
@@ -466,14 +524,7 @@ void DramaSimulator::execute(int steps){
             //Log(("hello there:" + std::to_string(affordances.size())).c_str());
             //Log(affordances[iSecret].rule.rulename.c_str());
             //pscenario(*affordances[iSecret].scene);
-            if (affordances[iSecret].scene != NULL)
-            {
-            //  pscenario(*affordances[iSecret].scene);
-                affordances[iSecret].rule.implement(&worldstate, *affordances[iSecret].scene);
-            }else {
-                scenario scene;
-                affordances[iSecret].rule.implement(&worldstate, scene);
-            }
+            implement(affordances[iSecret]);
         } else {
             affordances.clear();
             Log((header + "\033[0;32m No more affordances - Games Ends ... \033[0m\n").c_str());
@@ -528,7 +579,6 @@ bool DramaSimulator::readContext(std::string token){
         if (isExclusionLogic(token)){
             if (contextDomainName == "") contextDomainName = "base";
             worldstate.add(token);
-            contextDomainName = "";
             return true;
         } else {
             Log ("  (ERROR) Unrecognized Exclusion Logic while reading context:");
@@ -552,7 +602,6 @@ bool DramaSimulator::readRules(std::string token){
         if (isLogicaRule(ruleCollected)){
             if (ruleDomainName == "") ruleDomainName = "base";
             addrule(ruleDomainName,ruleCollected);
-            ruleDomainName = "";
             return true;
         } else {
             Log("  (ERROR) Unrecognized Logical Rule:");
@@ -584,8 +633,14 @@ void DramaSimulator::getKeyword(std::string token){
         } 
         if (isDomainName(token) && tokenState == LCA_RULE_BEGIN) ruleDomainName = trim(token);
         if (isDomainName(token) && tokenState == LCA_CONTEXT_BEGIN) contextDomainName = trim(token);
-        if (token == "context" && tokenState == LCA_OPEN) tokenState = LCA_CONTEXT_BEGIN;
-        if (token == "stage" && tokenState==LCA_OPEN) tokenState = LCA_RULE_BEGIN;
+        if (token == "context" && tokenState == LCA_OPEN) {
+            tokenState = LCA_CONTEXT_BEGIN;
+            contextDomainName = "";
+        }
+        if (token == "stage" && tokenState==LCA_OPEN) {
+             tokenState = LCA_RULE_BEGIN;
+             ruleDomainName = "";
+        }
         if (token == "{" && tokenState == LCA_CONTEXT_BEGIN) tokenState = LCA_CONTEXT_READ;
         if (token == "{" && tokenState == LCA_RULE_BEGIN) tokenState = LCA_RULE_READ;
     }
@@ -641,8 +696,10 @@ LogicRuleSet* DramaSimulator::getruleset(std::string ruleset)
     if (rules.find(ruleset) != rules.end()){
         return rules[ruleset]; 
     } else{
-        Log("\t (--) ERROR: Not found ruleset");
-        Log(ruleset.c_str());
-        return NULL;
+        LogicRuleSet *base = new LogicRuleSet();
+        rules[ruleset] = base;
+        Log(("(-) Ruleset created: " + ruleset).c_str());
+        return base;
+        //return NULL;
     }
 };
