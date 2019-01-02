@@ -1,0 +1,52 @@
+## Testing of equalities
+
+context baseline = {
+
+	.actors.Peter.strength!i2,
+	.actors.Charles.strength!i2,
+
+	.actors.Peter.health!i10,
+	.actors.Charles.health!i10,
+	.started.not
+}
+
+
+stage war = {
+
+beginning "Once upon a time ..." :
+		.started!not * .actors.[Actor1] * .actors.[ACTOR2] * [Actor1] != [ACTOR2] -> {
+ 		set .started!ok;
+ 		print ("In a dark alley the two desperarados meet. They look at each other angrily.");
+ 		print ("Tonight they will settle their business. Mano-o-Mano. [Actor1] and [ACTOR2] ");
+ 		print ("old war veterans and former friends. Now deadly enemies ...  ");
+ 		flow switch;
+ }
+
+attacks "[ACTOR2] attacks [ACTOR1] with [STR2]" :
+		.started!ok * .actors.[ACTOR1].strength![STR1] * .actors.[ACTOR2].strength![STR2] *
+		[STR1] <= [STR2] * [ACTOR1] != [ACTOR2] * .actors.[ACTOR1].health![HEALTH] *
+		[HEALTH] != i0  -> {
+ 		#pop .actors.[ACTOR2];
+ 		print ("[ACTOR1] attacks [ACTOR2] with strength [STR1]");
+ 		calc .actors.[ACTOR1].health![HEALTH] - [STR2];
+ 		flow switch;
+ }
+
+ending "The end" :
+		.started!ok * .actors.[ACTOR].health![HEALTH] * [HEALTH] == i0 -> {
+ 		print ("[ACTOR] falls to the ground .. dead.");
+ 		set .dead.[ACTOR];
+ 		pop .actors.[ACTOR];
+ 		set .started!ending;
+ }
+
+newscene "Aftermath ..." :
+		.started!ending * .dead.[actor] -> {
+ 		set .started!newepisode;
+ 		print ("In cafe Lucy and Jack sits and sips Coffee ... ");
+ 		print ("Suddenly the door slams up open and the blodied ");
+ 		print ("body of [actor] falls on the floor in a red pool");
+ 		print ("of blood ..  ");
+ }
+
+}

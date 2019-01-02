@@ -1,0 +1,80 @@
+"askdaks djaksjdkasj 
+dkasjdkasj dkasjd. jk  . . j kjk jk kjjjkjkj ())(kakskd
+jasdjk"
+
+
+context basic = {
+    .actors.charles.gender!male,
+    .actors.peter.gender!male,
+    .actors.lucy.gender!female,
+    .actors.melinda.gender!female,
+    .actors.rose.gender!female,
+
+    .at.rose!livingroom,
+    .at.melinda!livingroom,
+    .at.lucy!livingroom,
+    .at.charles!livingroom,
+    .at.peter!livingroom,
+    .makingout
+};
+
+stage .episode.one = {
+init :  ~.[PARENT].is_initialised -> {
+
+        set .[PARENT].is_initialised;
+        set .play.smallthing.peter;
+        print ("Once upon a time ....");
+
+    }
+
+end : ~.play.smallthing.peter -> {
+        pop .episode.one;
+        print ("The End!");
+    }      
+}
+
+stage .play.smallthings.[ACTOR] = {
+//
+init : -> {
+
+        set .[PARENT].participant.lucy;
+        set .[PARENT].participant.peter;
+        set .[PARENT].participant.melinda;
+        set .[PARENT].participant.charles;
+        set .[PARENT].participant.rose;
+
+        print("It was a quiet evening in the little fantasy world.");
+
+    }
+//
+greet "Moving to the Barn" : 
+        [ACTOR] == peter * .at.lucy!livingroom * .at.peter!livingroom -> {
+
+        print ("Lucy and Peter is in the livingroom. Peter makes his excuses and leaves for the barn..."); 
+        set .at.peter!barn;
+        call .[PARENT].arrival_melinda { ACTOR : [ACTOR] }; # means that we will try to run next function.
+    }
+
+arrival_melinda "Melinda and Peter meets up in the barn" : 
+        [ACTOR] == melinda * .at.peter!barn * ~.at.melinda!barn -> {
+
+        print ("Peter is at the barn. Melinda enters the barn.") ; 
+        set .at.melinda!barn;
+    }
+
+arrival_rose "Rose arrives to the barn" : 
+        [ACTOR] == rose * .at.peter!barn * ~.at.rose!barn -> {
+
+        print ("Peter is at the barn. Rose enters the barn.") ; 
+        set .at.rose!barn;
+    }
+
+flirt1 "Making out in the [LOCATION]" :
+        [ACTOR] == [MAN] * .at.[MAN]![LOCATION] * .at.[WOMAN]![LOCATION] * 
+        .actors.[MAN].gender!male * .actors.[WOMAN].gender!female -> {
+
+        print ("[MAN] and [WOMAN] are both in the [LOCATION] and makes out ... "); 
+        set .makingout.[MAN].[WOMAN].[LOCATION];
+    }    
+
+}

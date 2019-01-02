@@ -1,0 +1,108 @@
+# First take on converstion
+
+
+context episodeOne = {
+
+	.actors.Lucy.talks.topicA.topics.love,
+	.actors.Lucy.talks.topicA.topics.life,
+	.actors.Lucy.talks.topicA.repeat.i0,
+
+	.actors.Miranda.talks.topicA.topics.smalltalk,
+	.actors.Miranda.talks.topicA.topics.life,
+	.actors.Miranda.talks.topicA.repeat.i0,
+
+	.actors.Lucy.talks.topicB.topics.sex,
+	.actors.Lucy.talks.topicB.topics.happiness,
+	.actors.Lucy.talks.topicB.repeat.i0,
+
+	.actors.Miranda.talks.topicB.topics.love,
+	.actors.Miranda.talks.topicB.topics.sex,
+	.actors.Miranda.talks.topicB.repeat.i0,
+
+	.actors.Lucy.talks.topicC.topics.eternity,
+	.actors.Lucy.talks.topicC.topics.happiness,
+	.actors.Lucy.talks.topicC.repeat.i0,
+
+	.actors.Miranda.talks.topicC.topics.happiness,
+	.actors.Miranda.talks.topicC.topics.hope,
+	.actors.Miranda.talks.topicC.repeat.i0,
+
+	.actors.Lucy.talks.topicD.topics.vampires,
+	.actors.Lucy.talks.topicD.topics.eternity,
+	.actors.Lucy.talks.topicD.topics.death,
+	.actors.Lucy.talks.topicD.repeat.i0,
+
+	.actors.Miranda.talks.topicD.topics.death,
+	.actors.Miranda.talks.topicD.topics.hope,
+	.actors.Miranda.talks.topicD.repeat.i0,
+
+	.stage.topic_begin,
+	.conversation.topics.life,
+	.conversation.topics.smalltalk,
+
+	.counting.switch.i0,
+	.counting.explore.i0
+	.turntaker.Lucy.Miranda
+}
+
+
+stage base = {
+
+opening "Opening Scene" : .stage!topic_begin ->{
+
+	print ("It was an early afternoon. You are in the classroom. You can see Lucy and Miranda");
+	set	.stage!topic_flow;
+}
+
+switchtopic "[speaker] introduces [NewTopic]" :  
+		.stage!topic_flow * .turntaker![speaker]![listener] *
+		[Topic] != [NewTopic] *
+		~.actors.[speaker].talks.[Quip].repeat.i8 *
+		~.conversation.topics.[NewTopic] *
+		.conversation.topics.[Topic] *
+		.actors.[speaker].talks.[Quip].topics.[Topic] *
+		.actors.[speaker].talks.[Quip].topics.[NewTopic] *
+	 ->{
+	 	set .turntaker![listener]![speaker];
+	 	pop .conversation.topics;
+	 	add .conversation.topics .actors.[speaker].talks.[Quip].topics;
+	 	calc .actors.[speaker].talks.[Quip].repeat![Repeats] + i2;
+		print ("There is a lively talk on [Topic] and other topics.");
+		print ("[speaker] speaks about [Topic] and introduces a new");
+		print ("topic on [NewTopic]. There is a lively discussion");
+		print ("on [Topic] and [NewTopic] .. ");
+		calc .counting.switch![Switch] + i2;
+
+		flow switch;
+	}
+
+exploretopic "[speaker] leads the discussion on the topics [TopicA] and [TopicB]" :  
+		.stage!topic_flow * .turntaker![speaker]![listener] *
+		[TopicA] != [TopicB] *
+		~.actors.[speaker].talks.[Quip].repeat.i8 *
+		.conversation.topics.[TopicA] * .conversation.topics.[TopicB] *
+		.actors.[speaker].talks.[Quip].topics.[TopicA] *
+		.actors.[speaker].talks.[Quip].topics.[TopicB] *
+		//
+		* .conversation.speaker.[speaker] * [actor] == [speaker]
+		//
+	 ->{
+	 	set .turntaker![listener]![speaker];
+	 	calc .actors.[speaker].talks.[Quip].repeat![Repeats] + i2;
+		print ("There is a deeper discussion on [TopicA] and [TopicB]");
+		print ("[speaker] is contributing to the topics.");
+		calc .counting.explore![Switch]+i2;
+		call others::test_function;
+		flow switch;
+	}
+}
+
+stage others = {
+
+test_function "Testing function" :
+
+		->
+
+		print("Successfully called the function");
+
+}

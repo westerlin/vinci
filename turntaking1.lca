@@ -1,0 +1,50 @@
+context base = {
+	.turn_taking.you.lucy.rose,
+	.actor.you.interact,
+	.actor.lucy.random,
+	.actor.rose.random,
+	.flowcontrol!shifting
+}
+
+stage base = {
+
+shifting "turn shifting to [Actor]":
+
+	.turn_taking.[Actor].[BBB].[CCC] * .actor.[Actor].[Flow] * .flowcontrol.shifting
+
+	-> {
+		set .turn_taking![BBB].[CCC].[Actor];
+		set .flow![Flow];
+		set .current![Actor];
+		set .flowcontrol!acting;
+	}
+
+attacking "[Actor] Attack":
+
+	.current![Actor] * .flowcontrol.acting
+
+	-> {
+		print("[Actor] attacks viciously... ");
+		set .flowcontrol!shifting;
+		set .flow!random;
+	}
+
+defend "[Actor] defends":
+	.current![Actor] * .flowcontrol.acting
+
+	-> {
+		print("[Actor] defends desperately ... ");
+		set .flowcontrol!shifting;
+		set .flow!random;
+	}
+
+ChangeOrder "Order was rearranged":
+	.turn_taking.[CCC].[BBB].[Actor] * .current![Actor] * .flowcontrol.acting
+
+	-> {
+		set .turn_taking![BBB].[Actor].[CCC];
+		print("[Actor] confuses his/her enemies and new turn order ... ");
+		set .flowcontrol!shifting;
+		set .flow!random;
+	}
+}

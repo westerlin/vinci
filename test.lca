@@ -1,0 +1,51 @@
+## hello 
+
+context init = {
+
+	.ws.actors.charles.mood.neutral,
+	.ws.actors.abbie.mood.sleepy,
+	.ws.actors.abbie.location.lounge,
+
+	.ws.gallery.hall,
+	.ws.gallery.loung
+}
+
+set gallery = (hall, lounge);
+
+enum MOODS = {ecstatic,euforic,very_happy,happy,pleased,neutral,displeased,angry,very_angry,enraged,exploding}
+
+stage play = {
+
+	revelation_rule "assdsasas": .ws.actors.[X].location.[L?gallery] -> {
+
+		.ws.actors.[X].mood!surprised;
+		.ws.actors.[X].sanity.value++;
+		.ws.location.chockscenes.[L];
+		
+		text("[X] was suprised by the revelation of the statuette on show in the [L].");
+	}
+
+	revelation_rule2 "sdsdsd|asdasdasd|asdasdasd": 
+		.ws.actors.[X].location.[L] * .ws.gallery.[L] -> {
+		# Må resultere i samme som ovenfor - så vi undgår ny syntax
+		# L vil udgøre fælles mængden i location.L og gallery.L - altså 'lounge'
+		.ws.actors.[X].mood!surprised;
+		.ws.actors.[X].sanity.value++;
+		.ws.location.chockscenes.[L];
+		
+		text("[X] was suprised by the revelation of the statuette on show in the [L].");
+		increase .ws.actors.[X].[MOODS];
+
+	revelation_rule2: .ws.actors.[X].location.[L] or .ws.gallery.[L] -> {
+		# problem her at hvis kun højre pre-condition er sand har vi ingen X
+		# Hvordan skal det i givet fald fortolkes???
+		.ws.actors.[X].mood!surprised;
+		.ws.actors.[X].sanity.value++;
+		.ws.location.chockscenes.[L];
+		
+		text("[X] was suprised by the revelation of the statuette on show in the [L].");
+	}
+
+}
+
+step play init;

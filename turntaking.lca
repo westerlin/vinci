@@ -1,0 +1,56 @@
+context base = {
+	.turn_taking.newturn,
+	.turn_taking.you,
+	.turn_taking.lucy,
+	.turn_taking.rose,
+	.actor.you.interact,
+	.actor.lucy.random,
+	.actor.rose.random,
+	.flowcontrol!shifting
+}
+
+
+
+stage base = {
+
+shifting "turn shifting to [Actor]":
+
+	.turn_taking.[Actor] * .actor.[Actor].[Flow] * .flowcontrol.shifting
+
+	-> {
+		pop .turn_taking.[Actor];
+		set .flow![Flow];
+		set .current![Actor];
+		set .flowcontrol!acting;
+	}
+
+attacking "[Actor] Attack":
+
+	.current![Actor] * .flowcontrol.acting
+
+	-> {
+		print("[Actor] attacks viciously... ");
+		set .flowcontrol!shifting;
+		set .flow!random;
+	}
+
+defend "[Actor] defends":
+	.current![Actor] * .flowcontrol.acting
+
+	-> {
+		print("[Actor] defends desperately ... ");
+		set .flowcontrol!shifting;
+		set .flow!random;
+	}
+
+newturn "New round":
+		.turn_taking!newturn * .flowcontrol.shifting
+
+	-> {
+		set .flow!random;
+		set .turn_taking.you;
+		set .turn_taking.lucy;
+		set .turn_taking.rose;
+	}
+
+}

@@ -1,0 +1,111 @@
+# First take on converstion
+
+
+context episodeOne = {
+	.actors.Peter.gender!male,
+	.actors.Miranda.gender!female,
+	.actors.Lucy.gender!female,
+	.actors.Lucy.relationship.Peter.i5,
+	.actors.Lucy.relationship.Miranda.i5,
+	.actors.Miranda.relationship.Lucy.i5,
+	.actors.Miranda.relationship.Peter.i5,
+	.actors.Peter.relationship.Miranda.i5,
+	.actors.Miranda.relationship.Peter.i5,
+
+	.actors.Miranda.talk.topic.small_talk.sex!i0,
+	.actors.Lucy.talk.topic.sex.flowers!i0,
+	.actors.Peter.talk.topic.flowers.nature!i0,
+	.actors.Miranda.talk.topic.flowers.art!i0,
+	.actors.Lucy.talk.topic.nature.small_talk!i0,
+	.actors.Peter.talk.topic.art.small_talk!i0,
+	.actors.Miranda.talk.topic.art.nature!i0,
+	.actors.Lucy.talk.topic.nature.dogs!i0,
+	.actors.Peter.talk.topic.art.modern!i0,
+	.actors.Peter.talk.topic.art.abstract!i0,
+	.actors.Lucy.talk.topic.dogs.horses!i0,
+	.actors.Peter.talk.topic.modern.architecture!i0,
+
+	.stage.topic_begin,
+	.conversation.topics.other_topic,
+}
+
+
+stage intro = {
+
+opening "Opening Scene" : .stage!topic_begin ->{
+
+	print ("It was an early afternoon. You are in the classroom. You can see Lucy and Miranda");
+	set	.stage!topic_flow;
+	set .conversation.topics.small_talk;
+}
+
+switchtopic "[speaker] introduces [topicNew]" :  
+		.stage!topic_flow *
+		.conversation.topics.[topicOld] *
+		.conversation.topics.[topicMatch] *
+		.actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] *
+		[topicLink] == [topicMatch] * [topicNew] != [topicMatch] *
+		[topicNew] != [topicOld] *[topicLink] != [topicOld] *
+		[Repeats] <= i8
+		//
+		* .conversation.speaker.[speaker] * [actor] == [speaker]
+		//
+	 ->{
+	 	set .converstion.dropped![topicOld];
+	 	pop .conversation.topics.[topicOld];
+	 	set .conversation.topics.[topicNew];
+	 	calc .actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] + i2;
+		print ("[speaker] introduces new topic on [topicNew]");
+		print ("There is a lively discussion on [topicLink] and [topicNew]");
+		flow switch;
+	}
+
+exploretopic "[speaker] leads the discussion on the topics [topicLink] and [topicNew]" :  
+		.stage!topic_flow *
+		.conversation.topics.[topicOld] *
+		.conversation.topics.[topicMatch] *
+		.actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] *
+		[topicLink] == [topicMatch] * [topicNew] != [topicMatch] *
+		[topicLink] != [topicOld] * [topicNew] == [topicOld] *
+		[Repeats] <= i8
+		//
+		* .conversation.speaker.[speaker] * [actor] == [speaker]
+		//
+	 ->{
+	 	set .converstion.dropped![topicOld];
+	 	pop .conversation.topics.[topicOld];
+	 	set .conversation.topics.[topicNew];
+	 	calc .actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] + i2;
+		print ("There is a deeper discussion on [topicLink] and [topicNew]");
+		flow switch;
+	}
+
+Playerlastword "[speaker] has the last word" :  
+		.stage!topic_flow *
+		.conversation.topics.[topicLink] *
+		.conversation.topics.[topicNew] *
+		.actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] *
+		i9 <= [Repeats] * .flow.random
+		//
+		* .conversation.speaker.[speaker] * [actor] == [speaker]
+		//
+	 ->{
+		set .stage!topic_end; 
+		print ("Player wins the debate !!");
+	}
+
+NPClastword "[speaker] has the last word" :  
+		.stage!topic_flow *
+		.conversation.topics.[topicLink] *
+		.conversation.topics.[topicNew] *
+		.actors.[speaker].talk.topic.[topicLink].[topicNew]![Repeats] *
+		i9 <= [Repeats] * .flow.interact
+		//
+		* .conversation.speaker.[speaker] * [actor] == [speaker]
+		//
+	 ->{
+		flow switch;
+		set .stage!topic_end; 
+		print ("NPC wins the debate !!");
+	}
+}

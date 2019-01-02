@@ -1,0 +1,22 @@
+// 
+	Initial Logica-file by Rasmus Westerlin 
+//
+
+context init = {
+	ws.actors!charles;
+	ws.actors.minna;
+	ws.actors.minna.happy.value=10;
+}
+
+stage play = {
+	rule1: ws.actors.charles imply text("Charles is alive");
+	rule2: ws.actors.minna imply text("Minna is alive");
+	rule3: ws.actors.charles * ws.actors.minna * ws.actors.OTHER.happy.value > 32 imply 
+	{
+		ws.actors.OTHER.happy.value++;
+		text("Both actors are alive");
+	}
+}
+
+
+step play init;
