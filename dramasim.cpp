@@ -320,7 +320,10 @@ bool DramaSimulator::implement(Affordance affordance){
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
                 bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
+                //Log(("before adding:"+bodytext).c_str());
+                //worldstate.outputTree("");
                 worldstate.add(bodytext);
+                //Log("after adding");
             } else if (args.str(1) == "pop")
             {
                 std::string bodytext = *fillInParmsEXT(args.str(2), scene);
@@ -525,6 +528,10 @@ void DramaSimulator::execute(int steps){
             //Log(affordances[iSecret].rule.rulename.c_str());
             //pscenario(*affordances[iSecret].scene);
             implement(affordances[iSecret]);
+            if (flowController == DRAMA_FLOW_RANDOM){
+                waitForAnyKey();
+            }
+
         } else {
             affordances.clear();
             Log((header + "\033[0;32m No more affordances - Games Ends ... \033[0m\n").c_str());
@@ -534,7 +541,7 @@ void DramaSimulator::execute(int steps){
             if (affordance.scene != NULL) delete affordance.scene; 
         }
         affordances.clear();
-        //worldstate.outputTree("");
+        //worldstate.get(".turntaker")->outputTree("");
         Log("");
         //affordances[0].rule.implement(&worldstate, scene);
         //affordances[1].rule.implement(&worldstate, scene);

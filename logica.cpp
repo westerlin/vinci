@@ -21,6 +21,115 @@ int main(int argc, char **argv)
 }
 */
 
+bool Logica::log()
+{
+    isLogging = true;
+    visibleChildren = children.size();
+    for(auto child : children) child.second->log();
+    return true;
+}
+
+bool Logica::revert()
+{
+    isLogging = false;
+    auto it = children.begin();
+    //std::list<std::string> deletelist;
+
+    while (it != children.end()) {
+        std::string childname = it->first;
+    //    Log(child.c_str());
+        children[childname]->revert();
+        switch (children[childname]->state) {
+            case LOGICA_CREATED:
+  //              Log(("deletes:"+child).c_str());
+                // HVIS GEMMES TIL SLUT OVERSKRIVER DEN NY NAVNGIVNING
+                // OMVENDT PROBLEMATISK AT VI IKKE KAN SLETTE PÅ FLOW
+
+                //deletelist.push_back(childname);
+                if (deleteChild(childname))
+                    it = children.erase(it);
+                else
+                    it++;
+                // potentially rename branches pushed aside
+            break;
+            case LOGICA_DELETED:
+//                Log("normalising");
+                    children[childname]->state = LOGICA_NORMAL;
+                    
+                    if (strncmp(childname.c_str(),"__" ,2) ==0)
+                    {
+                        //Log(childname.c_str());
+                        children[childname]->name.erase(0,2);
+                        //Log(children[childname]->name.c_str());
+                     // HER PROBLEMATISK AT VI SÆTTER NYT IND
+                     // HVAD GØR DET FOR SLETNING
+                        children[children[childname]->name] = children[childname];
+                        it =  children.erase(it);
+                    } else it++;
+
+                    break;
+            default:
+                it++;
+    break;
+        }
+    }
+    /*
+    for (auto name : deletelist){
+        deleteChild(name);
+    }
+    deletelist.clear();
+*/
+    return true;
+}
+
+bool Logica::deleteChild(std::string childname){
+        if(children[childname]->state != LOGICA_DELETED) visibleChildren--;
+        if (isLogging && children[childname]->state != LOGICA_CREATED) {
+            //Log("DELETE LOGGED");
+            children[childname]->state = LOGICA_DELETED;
+            return false;
+        } else {
+            //Log(("DELETE REAL"+childname).c_str());
+            children[childname]->cleanup();
+            //Log(("CLEAN REAL" + childname).c_str());
+            delete children[childname];
+            //Log(("DELETE POINTER" + childname).c_str());
+        
+            //children.erase(childname);
+         
+            //Log(("ERASE FROM LIST" + childname).c_str());
+            //outputTree("");
+            //Log(("SUPRESSED FROM LIST" + childname).c_str());
+            //outputTree("");
+        }
+        return true;
+}
+
+Logica* Logica::createChild(std::string childname){
+    visibleChildren++;
+    Logica *newChild = new Logica(childname);
+    if (isLogging) { 
+        newChild->state = LOGICA_CREATED;
+        if (children.find(childname)!=children.end() && children.find("__" + childname)==children.end()){
+            if(!isLogging) children[childname]->state = LOGICA_DELETED;
+            children["__"+childname] = children[childname];
+            children["__" + childname]->name = "__" + childname;
+            children.erase(childname);
+        }
+        return newChild;
+    } else
+        return newChild;
+}
+
+bool Logica::hasChild(std::string childname){
+    return (children.find(childname) != children.end() && ((!isLogging) || (children[childname]->state!=LOGICA_DELETED) ));
+}
+
+void Logica::init(){
+    state = LOGICA_NORMAL;
+    isLogging = false;
+};
+
 bool isSameScenario(scenario elementA, scenario elementB, std::list<string> vars){
     for (auto varname : vars){
         if (elementA[varname] != elementB[varname]) return false;
@@ -148,7 +257,7 @@ void pscenarioList(scenarioList scenes)
 void Logica::populate(Logica* logica){
     for (auto child: logica->children){ 
         //Log(child.first.c_str());
-        children[child.first] = new Logica(child.first);
+        children[child.first] = createChild(child.first);
     }
 };
 
@@ -157,21 +266,26 @@ Logica* Logica::add(std::string pathname){
     Logica* newchild = new Logica(childname);
     children[childname] = newchild;
     */
+    //Log(("adding:"+pathname).c_str());
     LogicSearchRec childname = logicPathToString(pathname);
     if (childname.prefix == "!")
         cleanup(childname.keyword);
-
-    if (children.find(childname.keyword) == children.end())
-        children[childname.keyword] = new Logica(childname.keyword);
+    //Log("after cleanup");
+    if (!hasChild(childname.keyword)){
+        children[childname.keyword] = createChild(childname.keyword);
+        //Log("after create");
+    }
+    //Log(("after haschild, nextpath;" + childname.nextpath).c_str());
 
     if (childname.nextpath != "")
         return children[childname.keyword]->add(childname.nextpath);
+    //Log("at leaf");
 
     return children[childname.keyword];
 }
 
 Logica* Logica::get(std::string childname){
-    if (children.find(childname) != children.end())
+    if (hasChild(childname))
         return children[childname];
     return NULL;
 }
@@ -180,31 +294,55 @@ void Logica::cleanup(){
 }
 
 void Logica::cleanup(std::string exclude){
-    Logica* tmp = NULL;
-        //auto record = children.begin();
-        for (auto record : children)
+    auto record = children.begin();
+    //Log("---------begin ------");
+    //outputTree("");
+    //Log("---------begin ------");
+    //std::list<std::string> deletelist;
+    while (record != children.end())
     {
-        Logica *child = record.second;
-        if (record.first != exclude)
-        {
-            delete child;
-            //children.erase(children.begin());
-        } else {
-            tmp = child;
-        }
+        std::string childname = record->first;
+        Logica *child = record->second;
+         
+        if (childname != exclude) {
+            if (deleteChild(childname)) 
+                record = children.erase(record);
+            else
+                record++;    
+            //deletelist.push_back(childname);
+        } else
+        record++;
+
     }
-    children.clear();
-    if (tmp != NULL) children[exclude] = tmp;
+    /*
+    for (auto name : deletelist){
+        deleteChild(name);
+    }
+    deletelist.clear();
+    */
+    //Log("---------finish ------");
+    //outputTree("");
+    //Log("---------finish ------");
 }
 
 void Logica::outputTree(std::string path){
-    path = (path + "." + name);
+    switch (state) {
+        case LOGICA_CREATED:
+            path = (path + ".\033[0;32m" + name+ "\033[0m");
+        break;
+        case LOGICA_DELETED:
+            path = (path + ".\033[0;31m" + name+ "\033[0m");
+        break;
+        default:
+            path = (path + "." + name);
+        break;
+    }
     if (children.size() > 0) {
         for (auto child : children){
             children[child.first]->outputTree(path);
         }
     } 
-    else{
+    else {
         Log(path.c_str());
     }
 }
@@ -242,37 +380,43 @@ bool isExclusionLogic(std::string path){
 void Logica::parameters(std::string path, std::string prefix, scenario scene, scenarioList &parms)
 {
     //prefix += ":" + name;
-    std::smatch matches;
-//    const char *pattern = "([/.|/!]{1,1})([A-Za-z_]+)";
-    std::regex reg(logicaPattern);
-    if (std::regex_search(path, matches, reg))
-    {
+    if (isLogging){
+        int tmp = visibleChildren;
+        visibleChildren = 0;
+        for (auto child : children) if (child.second->state != LOGICA_DELETED) visibleChildren++;
+        if (tmp != visibleChildren) {
+            Log(("ERROR VisibleChildren count:"+std::to_string(tmp)+", actual count:"+std::to_string(visibleChildren)).c_str());
+            throw std::exception();
+        }
+    } else
+        visibleChildren = children.size();
 
+    std::smatch matches;
+    //    const char *pattern = "([/.|/!]{1,1})([A-Za-z_]+)";
+    std::regex reg(logicaPattern);
+    if (std::regex_search(path, matches, reg)) {
         std::string nextpath = matches.suffix().str();
         std::string branch = matches.str(2);
-        if (isCapital(branch))
-        {
+        if (isCapital(branch)) {
             //parms[matches.str(2)] = this;
             //Log(matches.str(2).c_str());
-            if ((matches.str(1) != "!") || (children.size() == 1))
-                for (auto child : children)
-                {
-                    scene[branch] = child.first;
-                    std::string tmp = prefix + ":" + branch + "=" + child.first;
-                    children[child.first]->parameters(nextpath, tmp, scene, parms);
+            if ((matches.str(1) != "!") || (visibleChildren == 1))
+                for (auto child : children) {
+                    if (!isLogging || child.second->state != LOGICA_DELETED){
+                        scene[branch] = child.first;
+                        std::string tmp = prefix + ":" + branch + "=" + child.first;
+                        children[child.first]->parameters(nextpath, tmp, scene, parms);
+                    }
                     //children[child.first]->parameters(nextpath, prefix, parms);
                 }
         }
-        else if (children.find(branch) != children.end())
-        {
+        else if (hasChild(branch)) {
             //prefix += ":" + matches.str(2);
-            if ((matches.str(1) != "!") || (children.size() == 1))
+            if ((matches.str(1) != "!") || (visibleChildren == 1))
                 children[branch]->parameters(nextpath, prefix, scene, parms);
             //return parms;
         }
-    }
-    else
-    {
+    } else {
         /*
                 Log ("--------------------");
                 for (auto pair : scene){
@@ -301,57 +445,8 @@ bool Logica::has(std::string path){
     return has(path,parms);
 }
 
-bool Logica::has(std::string path, scenario parms)
-{
-    //std::list<std::string> listOfChildren;
-
-    std::smatch matches;
-    //    const char *pattern2 = "([/.|/!])";
-    //    const char* pattern = "([A-Za-z_]+)[/.|/!]{0,1}";
-    //const char *pattern = "([/.|/!]{1,1})([A-Za-z_]+)";
-    std::regex reg(logicaPattern);
-
-    if (std::regex_search(path, matches, reg))
-    {
-        std::string keyname = matches.str(2);
-        if (isCapital(keyname))
-            if (parms.find(keyname) != parms.end())
-            {
-                keyname = parms[keyname];
-            }
-        /*
-        Log(("My name is:"+name).c_str());
-        for (auto x : children)
-        {
-            Log(("\t"+x.first).c_str());
-        }
-
-        Log(("prefix:["+matches.prefix().str()+"]").c_str());
-        Log(("match:[" + matches.str(1)+"]").c_str());
-        Log(("match:[" + matches.str(2) + "]").c_str());
-        Log(("suffix:[" + matches.suffix().str() + "]").c_str());
-        Log("found regex");
-        */
-        if (children.find(keyname) != children.end())
-        {
-            //Log("found children");
-            if ((matches.str(1) == "!") && (children.size() != 1))
-            {
-                // not unique
-                return false;
-            }
-            if (matches.suffix().str() != "")
-            {
-                std::string nextpath = matches.suffix().str();
-                int result = children[keyname]->has(nextpath, parms);
-                //Log(("returns:"+std::to_string(result)).c_str());
-                return result;
-            }
-            //Log("here tooo...");
-            return true;
-        }
-    }
-    return false;
+bool Logica::has(std::string path, scenario parms) {
+    return (get(path,parms)!=NULL);
 };
 
 Logica* Logica::get(std::string path, scenario parms)
@@ -359,22 +454,29 @@ Logica* Logica::get(std::string path, scenario parms)
     std::smatch matches;
     std::regex reg(logicaPattern);
 
+    if (isLogging){
+        int tmp = visibleChildren;
+        visibleChildren = 0;
+        for (auto child : children) if (child.second->state != LOGICA_DELETED) visibleChildren++;
+        if (tmp != visibleChildren) {
+            Log(("ERROR VisibleChildren count:"+std::to_string(tmp)+", actual count:"+std::to_string(visibleChildren)).c_str());
+            throw std::exception();
+        }
+    } else
+        visibleChildren = children.size();
     if (std::regex_search(path, matches, reg))
     {
         std::string keyname = matches.str(2);
         if (isCapital(keyname))
-            if (parms.find(keyname) != parms.end())
-            {
+            if (parms.find(keyname) != parms.end()) {
                 keyname = parms[keyname];
             }
-        if (children.find(keyname) != children.end())
-        {
-            if ((matches.str(1) == "!") && (children.size() != 1))
-            {
-                return NULL;
+        if (hasChild(keyname)) {
+            if (matches.str(1) == "!" && visibleChildren != 1) {
+                    // not unique
+                    return NULL;
             }
-            if (matches.suffix().str() != "")
-            {
+            if (matches.suffix().str() != "") {
                 std::string nextpath = matches.suffix().str();
                 return children[keyname]->get(nextpath, parms);
             }
@@ -388,15 +490,14 @@ bool Logica::pop(std::string pathname){
 
     LogicSearchRec childname = logicPathToString(pathname);
 
-    if (children.find(childname.keyword) != children.end()){
+    if (hasChild(childname.keyword)){
         if (childname.nextpath != "")
             return children[childname.keyword]->pop(childname.nextpath);
-        children[childname.keyword]->cleanup();
-        delete children[childname.keyword];
-        children.erase(childname.keyword);
-        //Log((" (++) DelETEING : "+childname.keyword).c_str());
-        //outputTree("");
-        return true;
+        if (deleteChild(childname.keyword))
+            children.erase(childname.keyword);
+            //Log((" (++) DelETEING : "+childname.keyword).c_str());
+            //outputTree("");
+            return true;
     }
     return false;
 };

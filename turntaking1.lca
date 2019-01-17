@@ -42,7 +42,7 @@ ChangeOrder "Order was rearranged":
 	.turn_taking.[CCC].[BBB].[Actor] * .current![Actor] * .flowcontrol.acting
 
 	-> {
-		set .turn_taking![BBB].[Actor].[CCC];
+		set .turn_taking![CCC].[Actor].[BBB];
 		print("[Actor] confuses his/her enemies and new turn order ... ");
 		set .flowcontrol!shifting;
 		set .flow!random;

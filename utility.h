@@ -39,8 +39,8 @@ const char *const calcPatternOpen = "([a-zA-Z_0-9\\!\\.]+\\!\\[[a-zA-Z_0-9]+\\])
 const char *const ruleDomainNamePattern = "(\\w+)\\:\\:(\\w+)";
 //std::string logicaPattern = "([\\.|\\!]{1,1})[\\[]?([A-Za-z_]+)[\\]]?";
 
-std::vector<std::string>
-Split(const std::string &str, const std::string &regex);
+std::vector<std::string> Split(const std::string &str, const std::string &regex);
+//std::vector<string> Split(std::string str, std::string delimiter);
 
 std::string trim(std::string text);
 void Log(const char *message);
@@ -52,3 +52,7 @@ LogicSearchRec logicPathToString(std::string path);
 std::smatch* findPattern(std::string text, const char *pattern);
 bool isCapital(std::string &text);
 bool isDomainName(std::string token);
+bool isNumber(std::string text);
+
+void clearConsole();
+void waitForAnyKey();

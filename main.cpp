@@ -1,5 +1,11 @@
 #include "dramasim.h"
 
+void testLogica(Logica* l, std::string name){
+    if (l->has(name))
+        Log(("\033[0:32m" + name + "\033[0m").c_str());
+    else
+        Log(("\033[0:31m" + name + "\033[0m").c_str());
+}
 
 int main(int argc, char **argv)
 {
@@ -30,14 +36,135 @@ int main(int argc, char **argv)
     //drama.addrule("basic", "generic \"[ACTOR] moves from barn to castle\" : .at.ACTOR!barn -> {print (\"[ACTOR] goes to the castle ... \"); set .at.ACTOR!castle}");
     */
     //drama.execute(13);
-    logAffordances = (strncmp(argv[3], "debug", 5) == 0);
-    if (argc > 1)
-        drama.loadfile(argv[1]);
-    drama.execute(std::stoi(argv[2]));
-    //Log(trim("    hellow wolrd").c_str());
-    Log("");
-    drama.worldstate.outputTree("");
-/*
+
+    Logica logica = Logica();
+    if (false)
+    {
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        logica.log();
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.revert();
+        logica.outputTree("");
+        Log("------------------------");
+        testLogica(&logica, ".hello.thirdworld");
+    }
+    if (false)
+    {
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        logica.log();
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.add(".turntaking!rose!rose");
+        logica.add(".turntaking!lucy!lucy");
+        logica.add(".turntaking!rose!rose");
+        logica.pop("!turntaking");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!rose!lucy");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.add(".turntaking!lucy!rose");
+        logica.outputTree("");
+        Log("------------------------");
+        logica.revert();
+        logica.outputTree("");
+        Log("------------------------");
+        testLogica(&logica, ".hello.thirdworld");
+    }
+
+    if (true){
+        bool isLogging = false;
+
+        logAffordances = false;
+        if (argc > 3) {
+            if (strncmp(argv[3], "debug", 5) == 0) {
+                logAffordances = true;
+            } 
+        } else
+            Log ("Using 'debug' as third argument will enable logging of all rule evaluations");
+
+        if (argc > 1) 
+            drama.loadfile(argv[1]);
+        else
+            Log ("You need to specify a LCA file as first argument");
+        
+        if (argc > 4) {
+            if (strncmp(argv[4], "log", 3) == 0) {
+                drama.worldstate.log();
+                isLogging = true;
+            }    
+        } else {
+            Log ("You can specify if we want to test for reversibility by inserting 'log' as fourth argument");
+        }
+
+        if (argc >2) {
+            if (isNumber(argv[2])) {
+                Log("--------------- executing ----------------");
+                drama.execute(std::stoi(argv[2]));
+                drama.worldstate.outputTree("");
+            }
+        } else {
+            Log ("No Second argument specifying number of executing runs");
+        }
+        if (isLogging) {
+            drama.worldstate.revert();
+            Log("--------------------------- reverted ----------------------------------");
+            drama.worldstate.outputTree("");
+        }    
+    }
+    if (false)
+    {
+        logica.add("anewstree")->populate(&drama.worldstate);
+        logica.outputTree("");
+        Log("------------------------");
+        logica.revert();
+        logica.outputTree("");
+        Log("------------------------");
+    }
+    /*
 
     LogicRule myrule = LogicRule();
     myrule.addrule("flirt1 \"Making out in the barn\" : .at.[MAN]![LOCATION] * .at.[WOMAN]![LOCATION] * .actors.[MAN].gender!male * .actors.[WOMAN].gender!female -> {print (\"[MAN] and [WOMAN] are both in the [LOCATION] and makes out ... \") ; set .makingout.[MAN].[WOMAN].[LOCATION]}");
@@ -63,5 +190,5 @@ int main(int argc, char **argv)
         }
     }
     */
-   //drama.worldstate.get("makingout")->outputTree("");
+    //drama.worldstate.get("makingout")->outputTree("");
 }

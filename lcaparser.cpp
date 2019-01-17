@@ -66,7 +66,7 @@ bool isKeyword(std::string keyword){
 
 bool isWhitespace(char ch)
 {
-    return std::string(" \t\n").find(ch) != std::string::npos;
+    return std::string(" \t\n\r").find(ch) != std::string::npos;
 };
 
 bool noLineBreak(char ch){

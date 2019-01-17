@@ -1,0 +1,166 @@
+# First take on converstion
+
+
+context episodeOne = {
+
+	.actors.Lucy.talks.topicA.topics.love,
+	.actors.Lucy.talks.topicA.topics.life,
+	.actors.Lucy.talks.topicA.repeat.i0,
+
+	.actors.Miranda.talks.topicA.topics.smalltalk,
+	.actors.Miranda.talks.topicA.topics.life,
+	.actors.Miranda.talks.topicA.repeat.i0,
+
+	.actors.Lucy.talks.topicB.topics.sex,
+	.actors.Lucy.talks.topicB.topics.happiness,
+	.actors.Lucy.talks.topicB.repeat.i0,
+
+	.actors.Miranda.talks.topicB.topics.love,
+	.actors.Miranda.talks.topicB.topics.sex,
+	.actors.Miranda.talks.topicB.repeat.i0,
+
+	.actors.Lucy.talks.topicC.topics.eternity,
+	.actors.Lucy.talks.topicC.topics.happiness,
+	.actors.Lucy.talks.topicC.repeat.i0,
+
+	.actors.Miranda.talks.topicC.topics.happiness,
+	.actors.Miranda.talks.topicC.topics.hope,
+	.actors.Miranda.talks.topicC.repeat.i0,
+
+	.actors.Lucy.talks.topicD.topics.vampires,
+	.actors.Lucy.talks.topicD.topics.eternity,
+	.actors.Lucy.talks.topicD.topics.death,
+	.actors.Lucy.talks.topicD.repeat.i0,
+
+	.actors.Miranda.talks.topicD.topics.eternity,
+	.actors.Miranda.talks.topicD.topics.happiness,
+	.actors.Miranda.talks.topicD.repeat.i0,
+
+	.stage.topic_begin,
+	.conversation.topics.life,
+	.conversation.topics.smalltalk,
+
+	.counting.switch.i0,
+	.counting.explore.i0
+	.turntaker.Miranda.Lucy
+}
+
+
+stage base = {
+
+opening "Opening Scene" : .stage!topic_begin ->{
+
+	print ("It was an early afternoon. You are in the classroom. You can see Lucy and Miranda");
+	set	.stage!topic_flow;
+}
+
+switchtopic "[speaker] introduces [TopicB]-theme into the conversation" :  
+		.stage!topic_flow * .turntaker![speaker] *
+		[TopicA] != [TopicB] *
+		~.actors.[speaker].talks.[Quip].repeat.i8 *
+		~.conversation.topics.[TopicB] *
+		.conversation.topics.[TopicA] *
+		.actors.[speaker].talks.[Quip].topics.[TopicA] *
+		.actors.[speaker].talks.[Quip].topics.[TopicB] *
+	 ->{
+	 	pop .conversation.topics;
+	 	add .conversation.topics .actors.[speaker].talks.[Quip].topics;
+	 	calc .actors.[speaker].talks.[Quip].repeat![Repeats] + i2;
+		print ("There is a lively talk on [TopicA] and other topics.");
+		print ("[speaker] speaks, about [TopicA] and introduces a new");
+		print ("topic on [TopicB]. There is a lively discussion");
+		print ("on [TopicA] and [TopicB] .. ");
+		calc .counting.switch![Switch] + i2;
+		call others::[speaker]_[Quip];
+		call others::turn_taker;
+		flow switch;
+	}
+
+exploretopic "[speaker] leads the discussion on the topics [TopicA] and [TopicB]" :  
+		.stage!topic_flow * .turntaker![speaker] *
+		[TopicA] != [TopicB] *
+		~.actors.[speaker].talks.[Quip].repeat.i8 *
+		.conversation.topics.[TopicA] * .conversation.topics.[TopicB] *
+		.actors.[speaker].talks.[Quip].topics.[TopicA] *
+		.actors.[speaker].talks.[Quip].topics.[TopicB]
+	 ->{
+	 	calc .actors.[speaker].talks.[Quip].repeat![Repeats] + i2;
+		print ("There is a deeper discussion on [TopicA] and [TopicB]");
+		print ("[speaker] is contributing to the topics.");
+		calc .counting.explore![Switch]+i2;
+		call others::[speaker]_[Quip];
+		call others::turn_taker;
+		flow switch;
+	}
+}
+
+text mybase = {
+
+	topicA:
+	"asdlaksdlaskdlaskdalsdkalskdasldkaslkdalskdaksdalskdalskdlaskdaksd",
+	"asdlaksdlaksdlaksdlkasdlkasldksaldksaldkasldklaskdaslkdlaskdlaskdlsak",
+	"asdmasdkalsdkalksdlaskdlaskdlakdlaksdlaskdlaksdlasadkasdkasadlkasakda",
+	"alskdlaksdlaksdlaskdlaskdlaskdlaskdc,mcceoweowcweokwockkcwokwokco"
+	topicB:
+	"asdlaksdlaskdlaskdalsdkalskdasldkaslkdalskdaksdalskdalskdlaskdaksd",
+	"asdlaksdlaksdlaksdlkasdlkasldksaldksaldkasldklaskdaslkdlaskdlaskdlsak",
+	"asdmasdkalsdkalksdlaskdlaskdlakdlaksdlaskdlaksdlasadkasdkasadlkasakda",
+	"alskdlaksdlaksdlaskdlaskdlaskdlaskdc,mcceoweowcweokwockkcwokwokco"
+}
+
+
+stage others = {
+
+turn_taker "When [speaker] has elaborated on [TopicA] and [TopicB], [listener] takes the word .." :
+			.turntaker![speaker]![listener]
+		-> {
+		 	set .turntaker![listener]![speaker];
+			}
+
+test_function "Testing function" :
+			.not.available  
+		-> {
+				print("Successfully called the function");
+		}
+
+Lucy_topicA "[speaker] says, .. " :  -> {
+		print("Meaning of life must be to find love.")
+}
+
+Lucy_topicB "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Lucy_topicC "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Lucy_topicD "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Lucy_topicE "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Miranda_topicA "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Miranda_topicB "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Miranda_topicC "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Miranda_topicD "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+Miranda_topicE "[speaker] says, .. " : -> {
+		print(" It is really nice and great to have some of it.")
+}
+
+}

@@ -4,6 +4,7 @@
 #include <list>
 
 
+
 std::string *fillInParms(std::string text, scenario scene);
 bool isLogicaRule(std::string rule);
 extern bool logAffordances;

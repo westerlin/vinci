@@ -21,12 +21,24 @@ scenarioList *intersection(scenarioList listA, scenarioList listB, std::list<str
 bool isSameScenario(scenario elementA, scenario elementB, std::list<string> vars);
 bool isExclusionLogic(std::string path);
 
+enum LOGICA_STATES {
+    LOGICA_NORMAL=0,
+    LOGICA_DELETED=1,
+    LOGICA_CREATED=2,
+};
+
+
 class Logica
 {
 
 
-public : std::string name;
+public: 
+    std::string name;
     std::map<std::string, Logica *> children;
+    bool isLogging;
+    LOGICA_STATES state;
+    int visibleChildren = 0;
+    
     /*
     for (auto const& x : iter) {
         x->first
@@ -37,11 +49,14 @@ public : std::string name;
     Logica()
     {
         name = "<root>";
+        init();
     };
 
     Logica(std::string qname)
     {
         name = qname;
+        init();
+
     };
 
     ~Logica()
@@ -50,6 +65,7 @@ public : std::string name;
         cleanup();
     } 
 
+    void init();
     Logica* add(std::string childname);
     Logica* add(std::string childname, scenario parms);
     Logica* get(std::string childname);
@@ -65,4 +81,10 @@ public : std::string name;
     void parameters(std::string path, std::string prefix, scenario scene, scenarioList &parms);
     void parameters(std::string path, scenarioList &parms);
     void populate(Logica* logica);
+    bool log();
+    bool revert();
+    bool deleteChild(std::string childname);
+    Logica* createChild(std::string childname);
+    bool hasChild(std::string childname);
 };
+
