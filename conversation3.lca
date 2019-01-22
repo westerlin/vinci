@@ -41,8 +41,9 @@ context episodeOne = {
 	.conversation.topics.smalltalk,
 
 	.counting.switch.i0,
-	.counting.explore.i0
-	.turntaker.Miranda.Lucy
+	.counting.explore.i0,
+	.turntaker.Miranda.Lucy,
+	.flow.interact
 }
 
 

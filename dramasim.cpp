@@ -37,6 +37,7 @@ void LogicRule::addpreconditions(std::string precond_text){
         //Log(("   (+) Added precondition:" + prec).c_str());
     };
 }
+
 void LogicRule::addimplications(std::string impl_text)
 {
     std::vector<std::string> precs = Split(impl_text, ";");
@@ -239,6 +240,23 @@ LogicRule* DramaSimulator::getRuleDomain(std::string ruledomainname){
     return NULL;
 }
 
+std::string DramaSimulator::getListing(std::string path) {
+    Logica* node = worldstate.get(path);
+    std::string output = "";
+    if (node != NULL) {
+        for (auto child : node->children){
+            if (child.first == node->children.begin()->first){
+                output = child.first;
+            } else if (child.first == node->children.end()->first) {
+                output += " and " + child.first;
+            } else {
+                output += ", " + child.first;
+            }
+        }
+    }
+    return "";
+}
+
 bool DramaSimulator::implement(Affordance affordance){
     const char *pattern = "([\\w]+)[ ]+(.+)"; 
     LogicRule rule = affordance.rule;
@@ -367,6 +385,10 @@ bool DramaSimulator::implement(Affordance affordance){
                 //bodytext.erase(std::remove(std::begin(bodytext), std::end(bodytext), '\"'), std::end(bodytext));
                 //Log(("\n\t\t \033[1;33m" + bodytext + "\033[0m \n ").c_str());
                 Log(("\t \033[1;37m" + bodytext + "\033[0m").c_str());
+            } else if (args.str(1) == "listing"){
+                    std::string bodytext = *fillInParmsEXT(args.str(2), scene);
+
+
             } else if (args.str(1) == "calc")
                 {
                     std::string bodytext = *fillInParmsEXT(args.str(2), scene);
