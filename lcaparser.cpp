@@ -26,8 +26,9 @@ bool LCAStream::eof(){
 }
 
 
-void LCAStream::input(char buffer[]){
-    strcpy(buf, buffer);
+void LCAStream::input(char buffer[LCA_PARSER_BUFFER_SIZE]){
+    //strcpy(buf, buffer);
+    strncpy(buf, buffer,LCA_PARSER_BUFFER_SIZE);
     /*
     Log(("LOADED:"+std::to_string(strlen(buf))).c_str());
     for (int i=0;i<strlen(buf);i++) std::cout.put(buf[i]);
@@ -75,7 +76,8 @@ bool noLineBreak(char ch){
 
 bool isWordStart(char ch)
 {
-    return std::regex_match(&ch, std::regex("[\\.\\!a-z_A-Z\\[\\]]"));
+    std::string demo(1, ch);
+    return std::regex_match(demo.c_str(), std::regex("[\\.\\!a-z_A-Z\\[\\]]"));
 }
 bool isSlash(char ch)
 {
@@ -109,11 +111,19 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
     {
         while (!lcastream.eof() && predicate(lcastream.peek())){
             if (lcastream.peek() == '/') succ_backslash++; else succ_backslash = 0; 
-            if (adding) token->push_back(lcastream.next());
+            if (adding) {
+                char newchar = lcastream.next();
+                //strcpy(lcastream.next(),*newchar);
+                token->push_back(newchar);
+                //Log(token->c_str());
+            }    
             else lcastream.next();
         }
         //if (!predicate(lcastream.peek())) loading_state = LCA_WHITE_SPACE;
-        if (lcastream.eof()) return NULL;    
+        if (lcastream.eof()) {
+                        //Log("testing");
+
+            return NULL; }   
         return token; 
     };
 
@@ -174,12 +184,14 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
         if (lcastream.eof()) return LCA_EOLINE;
         char ch = lcastream.peek();
         //if (isSlash(ch)) return LCA_SLASH;
+       // std::cout << ch << std::endl;
         if (ch == '#') return LCA_REMARK;
         if (ch == '"') return LCA_TEXT;
-        if (isWord(ch)) return LCA_WORD;
+        if (isWord(ch)) return LCA_WORD; 
         if (isOperator(ch)) return LCA_OPERATOR;
         if (isSeparator(ch)) return LCA_SEPARATOR;
         if (isBracket(ch)) return LCA_BRACKETS;
+        //std::cout << ch << std::endl;
         std::string str(1, ch);
         lcastream.printBuffer();
         lcastream.croak("Can't handle character: " + std::to_string(ch) + " [" + str + "]");
@@ -191,7 +203,7 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
     //    Log(std::to_string(loading_state).c_str());
         if (loading_state == LCA_WHITE_SPACE)
             loading_state = nextState();
-        //Log(std::to_string(loading_state).c_str());
+       // Log(std::to_string(loading_state).c_str());
         switch (loading_state)
         {
         case LCA_TEXT:
@@ -232,18 +244,17 @@ std::string *LCAParser::readwhile(bool predicate(char ch), bool adding)
         default:
             return NULL;
         break;
-        }
     } 
+        }
     
 
-    std::string* LCAParser::tokenize(char input[])
+    std::string* LCAParser::tokenize(char input[LCA_PARSER_BUFFER_SIZE])
     {
-//        std::cout << (std::to_string(loading_state)).c_str() << "::";
-//        std::cout << "\033[0;36m" << token->c_str();
+    //std::cout << (std::to_string(loading_state)).c_str() << "::";
+    //std::cout << "\033[0;36m" << token->c_str();
         lcastream.input(input);
-
             //Log(("::" + std::string(lcastream.buf)).c_str());
-            return readnext();
+         return readnext();
     };
     std::string* LCAParser::nextToken()
     {

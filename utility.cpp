@@ -44,8 +44,9 @@ void clearConsole() {
 }
 
 void waitForAnyKey() {
-    cout << "Press any key to continue...";
-    system("read -n 1 -s -r -p \"Press any key to continue\""); // Continues when pressed a key like windows
+//    cout << "Press any key to continue...";
+///    system("read -n 1 -s -r -p \"Press any key to continue\""); // Continues when pressed a key like windows
+    system("./waitkey.sh"); // Continues when pressed a key like windows
 }
 
 #endif
@@ -66,25 +67,45 @@ bool isNumber(std::string text){
     return true;
 }
 
+
+
+
+std::vector<std::string> Split(const std::string &str, const std::string &regex){
+
+ std::vector<std::string> elems;
+
+      std::regex rgx (regex);
+
+      std::sregex_token_iterator iter(str.begin(), str.end(), rgx, -1);
+      std::sregex_token_iterator end;
+
+      while (iter != end)  {
+          //std::cout << "S43:" << *iter << std::endl;
+          elems.push_back(*iter);
+          ++iter;
+      }
+
+      return elems;
+}
+
 /*
-std::vector<string> Split(std::string str, std::string delimiter){
+std::vector<std::string> Split(const std::string &str, const std::string &regex){
     std::vector<std::string> list;
     size_t pos = 0;
     string token;
-    while ((pos = str.find(delimiter)) != string::npos) {
+    while ((pos = str.find(regex)) != string::npos) {
         token = str.substr(0, pos);
         list.push_back(token);
-        str.erase(0, pos + delimiter.length());
+        str.erase(0, pos + regex.length());
     }
     list.push_back(str);
     return list;
 }
-*/
 std::vector<std::string> Split(const std::string &str, const std::string &regex)
 { 
     return {std::sregex_token_iterator(str.begin(), str.end(), std::regex(regex), -1), std::sregex_token_iterator()};
 }
-
+*/
 void Log(const char *message)
 {
     std::cout << message << std::endl;

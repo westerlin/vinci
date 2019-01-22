@@ -2,20 +2,23 @@
 #include "logica.h"
 
 bool isWhitespace(char ch);
+static const int LCA_PARSER_BUFFER_SIZE = 4096;
 
 class LCAStream {
+
+
 
 public:
     int line = 1;
     int col = 0;
     int pos = 0;
-    char buf[];
+    char buf[LCA_PARSER_BUFFER_SIZE];
 
     char next();
     void croak(std::string msg);
     bool eof();
     char peek();
-    void input(char buffer[]);
+    void input(char buffer[LCA_PARSER_BUFFER_SIZE]);
     void printBuffer();
 };
 
@@ -65,7 +68,7 @@ class LCAParser
 
       std::string* readEscaped(std::string end, bool adding);
       std::string* readwhile(bool predicate(char ch), bool adding);
-      std::string* tokenize(char input[]);
+      std::string* tokenize(char input[LCA_PARSER_BUFFER_SIZE]);
       LCAConstants nextState();
       std::string* readnext();
       std::string* readWord();

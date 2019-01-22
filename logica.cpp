@@ -480,7 +480,7 @@ Logica* Logica::get(std::string path, scenario parms)
                 std::string nextpath = matches.suffix().str();
                 return children[keyname]->get(nextpath, parms);
             }
-            return this;
+            return children[keyname];
         }
     }
     return NULL;

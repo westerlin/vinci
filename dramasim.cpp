@@ -240,10 +240,10 @@ LogicRule* DramaSimulator::getRuleDomain(std::string ruledomainname){
     return NULL;
 }
 
-std::string DramaSimulator::getListing(std::string path) {
-    Logica* node = worldstate.get(path);
-    std::string output = "";
+std::string DramaSimulator::getListing(std::string path, scenario scene) {
+    Logica* node = worldstate.get(path, scene);
     if (node != NULL) {
+        std::string output = "";
         for (auto child : node->children){
             if (child.first == node->children.begin()->first){
                 output = child.first;
@@ -253,8 +253,9 @@ std::string DramaSimulator::getListing(std::string path) {
                 output += ", " + child.first;
             }
         }
-    }
-    return "";
+        return output;
+    } 
+    return "Empty:"+path+":";
 }
 
 bool DramaSimulator::implement(Affordance affordance){
@@ -387,8 +388,9 @@ bool DramaSimulator::implement(Affordance affordance){
                 Log(("\t \033[1;37m" + bodytext + "\033[0m").c_str());
             } else if (args.str(1) == "listing"){
                     std::string bodytext = *fillInParmsEXT(args.str(2), scene);
-
-
+                    bodytext = std::regex_replace(bodytext.c_str(), std::regex(" "), "");
+                    bodytext = getListing(bodytext,scene);
+                    scene["listing"] = bodytext;
             } else if (args.str(1) == "calc")
                 {
                     std::string bodytext = *fillInParmsEXT(args.str(2), scene);
@@ -535,7 +537,7 @@ void DramaSimulator::execute(int steps){
                             //pscene(*affordance.scene);
                             std::cout << (("(" + affordance.rule.rulename + ")").c_str()) << std::endl;
                          } else
-                             Log(("/t " + std::to_string(optionCode) + ") " + affordance.rule.ruledescription + "(" + affordance.rule.rulename + ")").c_str());
+                             Log(("\t " + std::to_string(optionCode) + ") " + affordance.rule.ruledescription + "(" + affordance.rule.rulename + ")").c_str());
                         optionCode++;                            
                     }
                     while (iSecret > affordances.size()){
@@ -684,19 +686,10 @@ void DramaSimulator::loadfile(std::string filename)
     bool comment = false;
     if (myReadFile)
     {
-        char output[100];
+        char output[LCA_PARSER_BUFFER_SIZE];
         int pos;
         if (myReadFile.is_open()){
-            while (myReadFile.get(output,100,0)){
-                //myReadFile >> output;
-                //if (std::string(output) == "//") comment = !comment;
-                //if (!comment) std::cout << output;
-                /*
-                pos =0;
-                while (pos <= strlen(output))
-                    std::cout << output[pos++];
-                //Log("\n\t----------------------------------");
-                */
+            while (myReadFile.get(output,LCA_PARSER_BUFFER_SIZE,-1)){
                 token = parser.tokenize(output); 
                 while (token != NULL){
                     getKeyword(*token);
@@ -704,13 +697,19 @@ void DramaSimulator::loadfile(std::string filename)
                     //Log(("New Token:"+*token).c_str());
                     token = parser.nextToken();
                 }
-                 
+                if (token == NULL) Log("reading new batch");
+                //if  (myReadFile.get(output,100,0)) Log("loading ok");
+                
+                //Log(output);
+                
+                
             }
             token = parser.token;
             getKeyword(*token);
-            //Log(("New Token:" + *token).c_str());
+            Log(("New Token:" + *token).c_str());
             delete token;
             myReadFile.close();
+            Log(std::to_string(sizeof(output)).c_str());
         }
     }
     else

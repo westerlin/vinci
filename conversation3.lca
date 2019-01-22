@@ -43,16 +43,17 @@ context episodeOne = {
 	.counting.switch.i0,
 	.counting.explore.i0,
 	.turntaker.Miranda.Lucy,
-	.flow.interact
+	.flow.random
 }
 
 
 stage base = {
 
 opening "Opening Scene" : .stage!topic_begin ->{
-
-	print ("It was an early afternoon. You are in the classroom. You can see Lucy and Miranda");
+    listing .actors;
+	print ("It was an early afternoon. You are in the classroom. You can see [listing]");
 	set	.stage!topic_flow;
+	flow interact;
 }
 
 switchtopic "[speaker] introduces [TopicB]-theme into the conversation" :  

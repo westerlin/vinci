@@ -88,7 +88,7 @@ public:
   void setflow();
   bool implement(Affordance affordance);
   LogicRule* getRuleDomain(std::string ruledomainname);
-  std::string getListing(std::string path);
+  std::string getListing(std::string path, scenario scene);
   DramaSimulator()
   {
 
